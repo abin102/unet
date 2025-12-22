@@ -1,0 +1,76 @@
+exp_name: "cifar10_resltresnet32"
+seed: 42
+output_dir: "runs/relt_correction"
+
+dataset: "cifar10v2"
+data_dir: "./data"
+batch_size: 128
+num_workers: 8
+pin_memory: true
+persistent_workers: true
+image_size: 32
+to_rgb: true
+imagenet_norm: false
+
+data_args:
+  imb_factor: 0.01
+  class_balance: false
+
+model: "resltresnet32"
+model_args:
+  num_classes: 10
+  scale: 1
+
+# Use custom ResLT loss instead of CE
+loss: "reslt_loss"
+loss_args:
+  beta: 0.9980  # weight for ICE vs FCE
+  head_classes: [0, 1, 2]      # indices of head classes
+  medium_classes: [3, 4, 5]    # indices of medium classes
+  tail_classes: [6, 7, 8, 9]   # indices of tail classes
+
+metrics: ["acc"]   # can extend later with head/medium/tail acc
+
+# optim: "adam"
+# optim_args: { lr: 1e-3, weight_decay: 1e-4 }
+
+optim: "sgd"
+optim_args:
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 5.0e-4
+  nesterov: true
+
+# scheduler: "cosine"
+# scheduler_args: { T_max: 50 }
+
+
+scheduler: "multistep"
+scheduler_args:
+  milestones: [160, 180]
+  gamma: 0.1
+  warmup_epochs: 5     # optional — add this to enable the 5-epoch warmup
+
+epochs: 250
+amp: false
+grad_clip: 0.0
+log_interval: 50
+val_interval: 1
+early_stop: { patience: 15, monitor: "val/acc", mode: "max" }
+
+
+# logging 
+logging:
+  debug: false         # for backtracing and diagnosing
+  level: INFO          # or DEBUG / WARNING / ERROR
+  rotation: 50 MB      # rotate log file when >50MB
+  retention: 14 days   # delete older logs
+  compression: zip     # compress rotated logs
+  tensorboard: false   # disable TB by default
+  attention: false     # for saving attention maps
+
+use_wandb: false
+wandb:
+  project: UGER
+  entity: abin24-cids # name-same as project name
+  resume: false

@@ -1,0 +1,50 @@
+exp_name: "cifar10_resltresnet32_lt"
+seed: 42
+output_dir: "runs/uger/cifar_resnet_experts"
+
+dataset: "cifar10v2"
+data_dir: "./data"
+batch_size: 128
+num_workers: 8
+pin_memory: true
+persistent_workers: true
+
+image_size: 32
+to_rgb: false
+imagenet_norm: false
+
+data_args:
+  imb_factor: 0.01
+  class_balance: false
+
+
+model: "resltresnet32"
+model_args:
+  num_classes: 10
+  scale: 1
+
+# 🔥 Use custom ResLT loss instead of CE
+loss: "reslt_loss"
+loss_args:
+  beta: 0.99  # weight for ICE vs FCE
+  head_classes: [0, 1, 2]      # indices of head classes
+  medium_classes: [3, 4, 5]    # indices of medium classes
+  tail_classes: [6, 7, 8, 9]   # indices of tail classes
+
+metrics: ["acc"]   # can extend later with head/medium/tail acc
+
+optim: "sgd"
+optim_args:
+  lr: 0.01
+  momentum: 0.9
+  weight_decay: 1e-4
+
+scheduler: "cosine"
+scheduler_args: { T_max: 50 }
+
+epochs: 500
+amp: false
+grad_clip: 0.0
+log_interval: 50
+val_interval: 1
+early_stop: { patience: 15, monitor: "val/acc", mode: "max" }

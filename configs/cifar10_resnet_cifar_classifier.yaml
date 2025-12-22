@@ -1,0 +1,22 @@
+exp_name: "cifar10_resnet_cifar_classifier"
+dataset: "cifar10v2"
+data_dir: "./data"
+batch_size: 64
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+
+model: "resnet_cifar_classifier"
+model_args:
+  num_classes: 10
+  drop: 0.1
+
+loss: "ce"
+optim: "adam"
+optim_args: { lr: 1e-3 }
+epochs: 50
+
+
+data_args:
+  class_balance: false
+  imb_factor: 1.0   # balanced CIFAR-10

@@ -1,0 +1,70 @@
+cat > .gitignore <<'EOF'
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.egg
+*.pyc
+
+# Virtualenv / env
+env/
+venv/
+.venv/
+pip-wheel-metadata/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter
+.ipynb_checkpoints/
+
+
+# PyTorch / checkpoints / weights
+*.pt
+*.pth
+*.ckpt
+runs/
+runs_attention_cifar
+checkpoints/
+wandb/
+tensorboard_logs/
+log_dir
+debug/
+
+# datasets / large data
+data/*.csv
+data/*.npy
+data/*.npz
+#data/*/  # if you store raw datasets locally, prefer to exclude them
+data/FireRisk
+data/MNIST
+data/cifar-10-python.tar.gz
+data/cifar-10-batches-py
+notebooks/data
+data/cifar-100-python.tar.gz
+data/cifar-100-python
+data/tiny-imagenet-200
+data/tiny-imagenet
+data/cifar
+data/cifar10
+data/isic2018
+data/btm
+
+
+
+# results folder
+results
+
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and env files
+.env
+secrets.json
+EOF

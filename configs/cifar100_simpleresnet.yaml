@@ -1,0 +1,107 @@
+# configs/cifar100_daiic_resnet34_even10.yaml
+# DAIIC on CIFAR-100 imbalanced: downsample EVEN classes to 10% (paper-style experiments)
+exp_name: "cifar100_daiic_resnet34_even10"
+seed: 42
+output_dir: "runs/daiic_cifar100_resnet34_even10"
+
+# -------------------------
+# dataset / dataloader
+# -------------------------
+dataset: "cifar100_imb"        # our imbalanced CIFAR100 loader (registered as cifar100_imb)
+data_dir: "./data"
+batch_size: 128
+num_workers: 6
+pin_memory: true
+persistent_workers: true
+
+image_size: 32
+to_rgb: false
+imagenet_norm: false
+
+# data-specific arguments passed into REGISTRY[dataset]
+data_args:
+  mode: "even"               # "even" | "odd" | "custom" | "none"
+  downsample_frac: 1 #0.1       # 0.1 -> keep 10% of selected classes
+  custom_classes: null       # used only if mode == "custom"
+  seed: 0
+
+# -------------------------
+# model
+# -------------------------
+model: "small_cifar"       # DAIIC-ready ResNet34 constructor (returns DAIICModule)
+model_args:
+  num_classes: 100
+  # pretrained: true          # set true if you want imagenet weights (note: cifar_stem + pretrained may mismatch)
+  in_channels: 3
+  # cifar_stem: true           # important for 32x32 inputs (preserve spatial resolution)
+  # fusion: "concat"           # "concat" (DAIIC-Con) or "add" (DAIIC-Add)
+  # se_reduction: 16
+  # dropout: 0.2
+
+
+# -------------------------
+# loss
+# -------------------------
+loss: "ce"                   # attention-augmented logistic regression
+# loss_args:
+#   class_weights: null         # optional static class weights (list or null)
+#   eps: 1e-8
+#   reduction: "mean"
+
+# -------------------------
+# metrics & evaluation
+# -------------------------
+metrics:
+  - "acc"                     # top-1 accuracy (for single-label evaluation)
+  - "macro_f1"                # macro F1 (recommended for imbalanced tasks)
+  - "per_class_auc"           # if you compute AUC per class (optional)
+
+# -------------------------
+# optimizer / scheduler
+# -------------------------
+optim: "adam"
+optim_args:
+  lr: 1e-3
+  weight_decay: 1e-4
+  betas: [0.9, 0.999]
+
+# optionally scale LR for backbone vs attention heads (handled in trainer by param_groups)
+# e.g. backbone_lr_scale: 0.1  # (if your trainer supports it)
+
+scheduler: "cosine"
+scheduler_args:
+  T_max: 200
+  eta_min: 0.0
+
+# -------------------------
+# training runtime
+# -------------------------
+epochs: 200
+amp: false                    # set true to enable mixed precision if trainer supports it
+grad_clip: 5.0
+
+log_interval: 50
+val_interval: 1
+
+# early stopping
+early_stop:
+  patience: 20
+  monitor: "val/macro_f1"
+  mode: "max"
+
+# checkpointing
+checkpoint:
+  save_best_only: true
+  monitor: "val/macro_f1"
+  mode: "max"
+  save_interval_epochs: 1
+
+# diagnostics (trainer should use these flags)
+diagnostics:
+  log_W_histogram: true       # log learned W histograms per epoch
+  log_se_gates: true          # log SE gating mean/std
+  save_attention_maps: true   # whether to save a few attention maps per epoch
+  num_attention_maps_to_save: 8
+
+# reproducibility
+deterministic: true

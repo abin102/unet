@@ -1,0 +1,10 @@
+dataset: "tiny_imagenet"
+data_dir: "./data/tiny-imagenet"
+image_size: 64
+imagenet_norm: true
+
+model: "resnet50_torch"
+model_args:
+  num_classes: 200
+  pretrained: true        # optional; will copy matching keys only
+  cifar_stem: true        # recommended for 64x64 inputs

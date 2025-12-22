@@ -1,0 +1,49 @@
+exp_name: "firerisk_resnet_cifar_classifier"
+
+# Data
+dataset: "firerisk"
+data_dir: "./data/FireRisk"
+batch_size: 16
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+image_size: 320
+to_rgb: false
+imagenet_norm: false
+
+# Model
+model: "resnet_cifar_classifier"
+model_args:
+  num_classes: 7
+  drop: 0.1
+
+# Training
+loss: "ce"
+optim: "adam"
+optim_args: { lr: 1e-3 }
+epochs: 50
+grad_clip: 0         # or a number, e.g., 1.0
+amp: false              # mixed precision training on/off
+loss_args:
+  beta: 0.99  # weight for ICE vs FCE
+  head_classes: ["Very_Low", "Non-burnable"]
+  medium_classes: ["Low", "Moderate"]
+  tail_classes: ["High", "Very_High", "Water"]
+
+
+
+# Scheduler
+scheduler: "cosine"
+scheduler_args:
+  T_max: 50
+
+# Early stopping
+early_stop:
+  monitor: "val_loss"
+  mode: "min"
+  patience: 10
+
+# Misc
+seed: 42
+output_dir: "./runs"
+progress_bar: true

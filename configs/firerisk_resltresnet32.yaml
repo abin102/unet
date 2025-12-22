@@ -1,0 +1,47 @@
+exp_name: "firerisk_resltresnet32"
+seed: 42
+output_dir: "runs/different_beta"
+
+dataset: "firerisk"
+data_dir: "./data/FireRisk"
+batch_size: 64
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+image_size: 320
+to_rgb: false
+imagenet_norm: false
+
+data_args:
+  imb_factor: 0.1
+  class_balance: false
+
+model: "resltresnet32"
+model_args:
+  num_classes: 7
+  scale: 1
+
+# 🔥 Use custom ResLT loss instead of CE
+loss: "reslt_loss"
+loss_args:
+  beta: 0.96  # weight for ICE vs FCE
+  head_classes: ["Very_Low", "Non-burnable"]
+  medium_classes: ["Low", "Moderate"]
+  tail_classes: ["High", "Very_High", "Water"]
+
+metrics: ["acc", "head", "medium", "tail"]   # can extend later with head/medium/tail acc
+
+optim: "adam"
+#optim_args: { lr: 1e-3, weight_decay: 1e-4 }
+optim_args: { lr: 5e-4, weight_decay: 1e-4 }
+
+
+scheduler: "cosine"
+scheduler_args: { T_max: 50 }
+
+epochs: 50
+amp: false
+grad_clip: 5.0
+log_interval: 50
+val_interval: 1
+early_stop: { patience: 15, monitor: "val/acc", mode: "max" }

@@ -1,0 +1,47 @@
+exp_name: "cifar10_resnet50"
+seed: 42
+output_dir: "runs_attention_cifar"
+
+dataset: "cifar10"        # use your existing cifar10 registry name
+data_dir: "./data"
+batch_size: 64
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+image_size: 32
+to_rgb: true
+imagenet_norm: false
+
+# data_args:
+#   imb_factor: 0.1
+#   class_balance: false
+
+model: "resnet50"
+model_args:
+  num_classes: 10
+  use_cbam: true
+  pretrained: false
+  in_channels: 3
+  cifar_stem: true       # <<< important for 32x32 inputs
+
+loss: "ce"
+# loss_args:
+#   beta: 0.5
+#   head_classes: [0,1,2]
+#   medium_classes: [3,4,5]
+#   tail_classes: [6,7,8,9]
+
+metrics: ["acc"]
+
+optim: "adam"
+optim_args: { lr: 1e-3, weight_decay: 1e-4 }
+
+scheduler: "cosine"
+scheduler_args: { T_max: 50 }
+
+epochs: 200
+amp: false
+grad_clip: 5.0
+log_interval: 50
+val_interval: 1
+early_stop: { patience: 15, monitor: "val/acc", mode: "max" }

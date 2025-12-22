@@ -1,0 +1,23 @@
+to run for different parameter beta -
+python train.py   --cfg configs/firerisk_resltresnet32.yaml   --over loss_args.beta=0.96 output_dir=runs/different_beta/beta_0.96
+
+
+
+# 1. initialize git, add files, initial commit
+git init
+git add .
+git commit -m "chore: initial project scaffold (configs, data, models, trainer, README)"
+
+# 2. create remote repo on GitHub (option A: using gh CLI)
+# (install GitHub CLI if you want: https://cli.github.com)
+gh repo create your-https://github.com/abin102/dnn_template --private --source=. --push
+
+# Option B: create an empty repo on github.com then:
+# git remote add origin git@github.com:https://github.com/abin102/dnn_template.git
+# git branch -M main
+# git push -u origin main
+
+# 3. protect main branch via GitHub settings (recommended)
+# 4. create develop branch if desired
+git checkout -b develop
+git push -u origin develop
