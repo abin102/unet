@@ -1,0 +1,107 @@
+# --------------------------------------------------------
+# U-Net Training on COVID-19 CT Segmentation
+# --------------------------------------------------------
+exp_name: "unet_ct_lung_infection"
+seed: 42
+output_dir: "runs/covid_segmentation"
+
+# -------------------------
+# Dataset / Dataloader
+# -------------------------
+dataset: "ct_segmentation"       # Must match key in data/__init__.py
+data_dir: "data/covid_segmentation/processed_data"
+batch_size: 16                   # Adjust: 16 for 24GB VRAM, 8 for 12GB, 4 for 6GB
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+
+image_size: 512                  # Native CT resolution
+to_rgb: false                    # Keep false (1 channel grayscale)
+imagenet_norm: false             # False (we use custom windowing in Dataset)
+
+data_args: {}
+
+# -------------------------
+# Model
+# -------------------------
+model: "unet"
+model_args:
+  in_channels: 1                 # Grayscale input
+  n_classes: 3                   # 0=Bg, 1=Lung, 2=Infection
+  features: [64, 128, 256, 512]  # Standard U-Net depth
+
+# -------------------------
+# Loss
+# -------------------------
+loss: "cross_entropy"            # Use standard CrossEntropyLoss
+loss_args: 
+  ignore_index: -100
+
+# -------------------------
+# Metrics & Evaluation
+# -------------------------
+# The trainer will only log/print the metrics listed here
+metrics:
+  - "acc_pixel"      # Global pixel accuracy
+  - "dice_macro"     # Average Dice across all 3 classes
+  - "dice_infection" # Specific focus on infection (Class 2)
+  - "dice_lung"      # Specific focus on lung (Class 1)
+  - "sen_macro"      # Sensitivity
+  - "spec_macro"     # Specificity
+  - "mae"            # Mean Absolute Error
+
+# -------------------------
+# Training Runtime
+# -------------------------
+epochs: 100
+amp: true                        # Enable Mixed Precision (Faster)
+grad_clip: 1.0                   # Clip gradients
+
+# -------------------------
+# Optimizer / Scheduler
+# -------------------------
+optim: "adamw"
+optim_args:
+  lr: 0.001
+  weight_decay: 1e-4
+
+scheduler: "cosine"
+scheduler_args:
+  T_max: 100
+  eta_min: 1e-6
+
+# -------------------------
+# Checkpointing & Early Stopping
+# -------------------------
+val_interval: 1                  # Validate every epoch
+log_interval: 10                 # Log to terminal every 10 batches
+
+early_stop:
+  patience: 15
+  monitor: "dice_infection"      # Stop if Infection Dice stops improving
+  mode: "max"
+
+checkpoint:
+  save_best_only: true
+  monitor: "dice_infection"      # Save best model based on Infection Dice
+  mode: "max"
+  save_interval_epochs: 1
+
+# -------------------------
+# Logging & Diagnostics
+# -------------------------
+logging:
+  tensorboard: true
+  level: "INFO"
+  rotation: "50 MB"
+  retention: "14 days"
+  
+diagnostics:
+  save_attention_maps: false
+  log_W_histogram: false
+
+use_wandb: true
+wandb:
+  project: "COVID-CT-Segmentation"
+  entity: "abin24-cids"
+  resume: false
