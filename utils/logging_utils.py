@@ -8,8 +8,6 @@ from pathlib import Path
 from loguru import logger as _logger
 
 
-
-
 # --- Robust project-root detection and path helpers ---
 def _find_project_root(start_path: Optional[str] = None) -> Path:
     """
