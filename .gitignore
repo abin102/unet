@@ -53,6 +53,7 @@ data/cifar
 data/cifar10
 data/isic2018
 data/btm
+data/covid_segmentation
 
 
 

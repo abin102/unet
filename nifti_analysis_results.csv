@@ -1,0 +1,61 @@
+Folder,File Name,Type,Shape,Dtype,Min Value,Max Value,Unique Values,Full Path
+radiopaedia_40_86625_0.nii,radiopaedia_org_covid-19-pneumonia-40_86625_0-dcm.nii,CT IMAGE,"(630, 630, 93)",uint8,12,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_40_86625_0.nii/radiopaedia_org_covid-19-pneumonia-40_86625_0-dcm.nii
+coronacases_004.nii,coronacases_org_004.nii,CT IMAGE,"(512, 512, 270)",int16,-1021,2020,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_004.nii/coronacases_org_004.nii
+coronacases_010.nii,coronacases_org_case010.nii,CT IMAGE,"(512, 512, 301)",int16,-1021,1920,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_010.nii/coronacases_org_case010.nii
+coronacases_008.nii,coronacases_org_008.nii,CT IMAGE,"(512, 512, 301)",int16,-1021,8575,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_008.nii/coronacases_org_008.nii
+coronacases_007.nii,coronacases_org_case007.nii,CT IMAGE,"(512, 512, 249)",int16,-1023,2515,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_007.nii/coronacases_org_case007.nii
+coronacases_009.nii,case009.nii,CT IMAGE,"(512, 512, 256)",int16,-1021,1845,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_009.nii/case009.nii
+radiopaedia_29_86490_1.nii,radiopaedia_org_covid-19-pneumonia-29_86490_1-dcm.nii,CT IMAGE,"(630, 630, 42)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_29_86490_1.nii/radiopaedia_org_covid-19-pneumonia-29_86490_1-dcm.nii
+radiopaedia_4_85506_1.nii,radiopaedia_org_covid-19-pneumonia-4_85506_1-dcm.nii,CT IMAGE,"(630, 630, 39)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_4_85506_1.nii/radiopaedia_org_covid-19-pneumonia-4_85506_1-dcm.nii
+radiopaedia_10_85902_1.nii,radiopaedia_org_covid-19-pneumonia-10_85902_1-dcm.nii,CT IMAGE,"(630, 630, 39)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_10_85902_1.nii/radiopaedia_org_covid-19-pneumonia-10_85902_1-dcm.nii
+coronacases_005.nii,coronacases_org_005.nii,CT IMAGE,"(512, 512, 290)",int16,-1021,5528,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_005.nii/coronacases_org_005.nii
+radiopaedia_36_86526_0.nii,radiopaedia_org_covid-19-pneumonia-36_86526_0-dcm.nii,CT IMAGE,"(630, 630, 45)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_36_86526_0.nii/radiopaedia_org_covid-19-pneumonia-36_86526_0-dcm.nii
+coronacases_001.nii,coronacases_org_001.nii,CT IMAGE,"(512, 512, 301)",int16,-1021,2996,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_001.nii/coronacases_org_001.nii
+radiopaedia_10_85902_3.nii,radiopaedia_org_covid-19-pneumonia-10_85902_3-dcm.nii,CT IMAGE,"(630, 630, 418)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_10_85902_3.nii/radiopaedia_org_covid-19-pneumonia-10_85902_3-dcm.nii
+radiopaedia_29_86491_1.nii,radiopaedia_org_covid-19-pneumonia-29_86491_1-dcm.nii,CT IMAGE,"(630, 630, 42)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_29_86491_1.nii/radiopaedia_org_covid-19-pneumonia-29_86491_1-dcm.nii
+coronacases_002.nii,coronacases_org_002.nii,CT IMAGE,"(512, 512, 200)",int16,-1023,9567,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_002.nii/coronacases_org_002.nii
+radiopaedia_7_85703_0.nii,radiopaedia_org_covid-19-pneumonia-7_85703_0-dcm.nii,CT IMAGE,"(630, 630, 45)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_7_85703_0.nii/radiopaedia_org_covid-19-pneumonia-7_85703_0-dcm.nii
+coronacases_006.nii,coronacases_org_006.nii,CT IMAGE,"(512, 512, 213)",int16,-1023,2217,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_006.nii/coronacases_org_006.nii
+coronacases_003.nii,coronacases_org_003.nii,CT IMAGE,"(512, 512, 200)",int16,-1023,8931,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/coronacases_003.nii/coronacases_org_003.nii
+radiopaedia_27_86410_0.nii,radiopaedia_org_covid-19-pneumonia-27_86410_0-dcm.nii,CT IMAGE,"(630, 630, 66)",uint8,4,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_27_86410_0.nii/radiopaedia_org_covid-19-pneumonia-27_86410_0-dcm.nii
+radiopaedia_14_85914_0.nii,radiopaedia_org_covid-19-pneumonia-14_85914_0-dcm.nii,CT IMAGE,"(630, 401, 110)",uint8,0,255,Continuous,data/covid_segmentation/Covid-19-2/Covid-19-2/radiopaedia_14_85914_0.nii/radiopaedia_org_covid-19-pneumonia-14_85914_0-dcm.nii
+LungMasks,coronacases_001.nii,MASK,"(512, 512, 301)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_001.nii
+LungMasks,coronacases_002.nii,MASK,"(512, 512, 200)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_002.nii
+LungMasks,coronacases_003.nii,MASK,"(512, 512, 200)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_003.nii
+LungMasks,coronacases_004.nii,MASK,"(512, 512, 270)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_004.nii
+LungMasks,coronacases_005.nii,MASK,"(512, 512, 290)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_005.nii
+LungMasks,coronacases_006.nii,MASK,"(512, 512, 213)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_006.nii
+LungMasks,coronacases_007.nii,MASK,"(512, 512, 249)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_007.nii
+LungMasks,coronacases_008.nii,MASK,"(512, 512, 301)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_008.nii
+LungMasks,coronacases_009.nii,MASK,"(512, 512, 256)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_009.nii
+LungMasks,coronacases_010.nii,MASK,"(512, 512, 301)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/coronacases_010.nii
+LungMasks,radiopaedia_10_85902_1.nii,MASK,"(630, 630, 39)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_10_85902_1.nii
+LungMasks,radiopaedia_10_85902_3.nii,MASK,"(630, 630, 418)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_10_85902_3.nii
+LungMasks,radiopaedia_14_85914_0.nii,MASK,"(630, 401, 110)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_14_85914_0.nii
+LungMasks,radiopaedia_27_86410_0.nii,MASK,"(630, 630, 66)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_27_86410_0.nii
+LungMasks,radiopaedia_29_86490_1.nii,MASK,"(630, 630, 42)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_29_86490_1.nii
+LungMasks,radiopaedia_29_86491_1.nii,MASK,"(630, 630, 42)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_29_86491_1.nii
+LungMasks,radiopaedia_36_86526_0.nii,MASK,"(630, 630, 45)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_36_86526_0.nii
+LungMasks,radiopaedia_40_86625_0.nii,MASK,"(630, 630, 93)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_40_86625_0.nii
+LungMasks,radiopaedia_4_85506_1.nii,MASK,"(630, 630, 39)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_4_85506_1.nii
+LungMasks,radiopaedia_7_85703_0.nii,MASK,"(630, 630, 45)",uint16,0,2,[0 1 2],data/covid_segmentation/Covid-19-2/LungMasks/radiopaedia_7_85703_0.nii
+InfectionMasks,coronacases_001.nii,MASK,"(512, 512, 301)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_001.nii
+InfectionMasks,coronacases_002.nii,MASK,"(512, 512, 200)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_002.nii
+InfectionMasks,coronacases_003.nii,MASK,"(512, 512, 200)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_003.nii
+InfectionMasks,coronacases_004.nii,MASK,"(512, 512, 270)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_004.nii
+InfectionMasks,coronacases_005.nii,MASK,"(512, 512, 290)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_005.nii
+InfectionMasks,coronacases_006.nii,MASK,"(512, 512, 213)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_006.nii
+InfectionMasks,coronacases_007.nii,MASK,"(512, 512, 249)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_007.nii
+InfectionMasks,coronacases_008.nii,MASK,"(512, 512, 301)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_008.nii
+InfectionMasks,coronacases_009.nii,MASK,"(512, 512, 256)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_009.nii
+InfectionMasks,coronacases_010.nii,MASK,"(512, 512, 301)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/coronacases_010.nii
+InfectionMasks,radiopaedia_10_85902_1.nii,MASK,"(630, 630, 39)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_10_85902_1.nii
+InfectionMasks,radiopaedia_10_85902_3.nii,MASK,"(630, 630, 418)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_10_85902_3.nii
+InfectionMasks,radiopaedia_14_85914_0.nii,MASK,"(630, 401, 110)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_14_85914_0.nii
+InfectionMasks,radiopaedia_27_86410_0.nii,MASK,"(630, 630, 66)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_27_86410_0.nii
+InfectionMasks,radiopaedia_29_86490_1.nii,MASK,"(630, 630, 42)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_29_86490_1.nii
+InfectionMasks,radiopaedia_29_86491_1.nii,MASK,"(630, 630, 42)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_29_86491_1.nii
+InfectionMasks,radiopaedia_36_86526_0.nii,MASK,"(630, 630, 45)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_36_86526_0.nii
+InfectionMasks,radiopaedia_40_86625_0.nii,MASK,"(630, 630, 93)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_40_86625_0.nii
+InfectionMasks,radiopaedia_4_85506_1.nii,MASK,"(630, 630, 39)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_4_85506_1.nii
+InfectionMasks,radiopaedia_7_85703_0.nii,MASK,"(630, 630, 45)",uint16,0,1,[0 1],data/covid_segmentation/Covid-19-2/InfectionMasks/radiopaedia_7_85703_0.nii
