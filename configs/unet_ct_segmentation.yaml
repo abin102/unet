@@ -10,7 +10,7 @@ output_dir: "runs/covid_segmentation"
 # -------------------------
 dataset: "ct_segmentation"       # Must match key in data/__init__.py
 data_dir: "data/covid_segmentation/processed_data"
-batch_size: 16                   # Adjust: 16 for 24GB VRAM, 8 for 12GB, 4 for 6GB
+batch_size: 4                   # Adjust: 16 for 24GB VRAM, 8 for 12GB, 4 for 6GB
 num_workers: 4
 pin_memory: true
 persistent_workers: true
@@ -27,34 +27,41 @@ data_args: {}
 model: "unet"
 model_args:
   in_channels: 1                 # Grayscale input
-  n_classes: 3                   # 0=Bg, 1=Lung, 2=Infection
+  n_classes: 2                   # 0=Bg, 1=Lung, 2=Infection
   features: [64, 128, 256, 512]  # Standard U-Net depth
 
 # -------------------------
 # Loss
 # -------------------------
-loss: "cross_entropy"            # Use standard CrossEntropyLoss
-loss_args: 
+# loss: "cross_entropy"            # Use standard CrossEntropyLoss
+# loss_args: 
+#   ignore_index: -100
+
+loss: ce_dice
+loss_args:
+  ce_weight: 1.0
+  dice_weight: 1.0
   ignore_index: -100
+
 
 # -------------------------
 # Metrics & Evaluation
 # -------------------------
 # The trainer will only log/print the metrics listed here
 metrics:
-  - "acc_pixel"      # Global pixel accuracy
-  - "dice_macro"     # Average Dice across all 3 classes
-  - "dice_infection" # Specific focus on infection (Class 2)
-  - "dice_lung"      # Specific focus on lung (Class 1)
-  - "sen_macro"      # Sensitivity
-  - "spec_macro"     # Specificity
-  - "mae"            # Mean Absolute Error
+  - "acc_pixel"
+  - "dice_macro"
+  - "dice_class_1"   # <--- Infection (was dice_infection)
+  - "sen_class_1"    # <--- Infection Sensitivity
+  - "spec_class_1"   # <--- Infection Specificity
+  - "mae"
+
 
 # -------------------------
 # Training Runtime
 # -------------------------
 epochs: 100
-amp: true                        # Enable Mixed Precision (Faster)
+amp: false                        # Enable Mixed Precision (Faster)
 grad_clip: 1.0                   # Clip gradients
 
 # -------------------------
@@ -62,7 +69,7 @@ grad_clip: 1.0                   # Clip gradients
 # -------------------------
 optim: "adamw"
 optim_args:
-  lr: 0.001
+  lr: 3e-4 
   weight_decay: 1e-4
 
 scheduler: "cosine"
@@ -77,21 +84,21 @@ val_interval: 1                  # Validate every epoch
 log_interval: 10                 # Log to terminal every 10 batches
 
 early_stop:
-  patience: 15
-  monitor: "dice_infection"      # Stop if Infection Dice stops improving
+  monitor: "dice_class_1"
   mode: "max"
+  patience: 15
 
 checkpoint:
-  save_best_only: true
-  monitor: "dice_infection"      # Save best model based on Infection Dice
+  monitor: "dice_class_1"
   mode: "max"
+  save_best_only: true
   save_interval_epochs: 1
 
 # -------------------------
 # Logging & Diagnostics
 # -------------------------
 logging:
-  tensorboard: true
+  tensorboard: false
   level: "INFO"
   rotation: "50 MB"
   retention: "14 days"

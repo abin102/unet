@@ -13,3 +13,5 @@ def register(name):
         REGISTRY[name] = fn
         return fn
     return deco
+
+from models.unet import build_unet 

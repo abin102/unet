@@ -14,6 +14,8 @@ from callbacks.logging import LoggingCallback
 from utils.freeze_utils import apply_freeze
 from utils.checkpoint_utils import load_checkpoint
 from utils.wandb_utils import init_wandb
+from utils.builders import build_loss
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -78,8 +80,11 @@ def main():
     # 5. Loss & Optimizer
     # Direct CrossEntropyLoss for segmentation (ignoring builders.py complex split logic)
     # If you have specific ignore_index in config, use it
-    loss_args = cfg.get("loss_args", {})
-    loss_fn = torch.nn.CrossEntropyLoss(**loss_args).to(device)
+    loss_fn = build_loss(
+    loss_name=cfg["loss"],
+    loss_args=cfg.get("loss_args", {}),
+    device=device
+)
     
     optim = get_optim(cfg["optim"], [p for p in model.parameters() if p.requires_grad], **(cfg.get("optim_args", {}) or {}))
     sched = get_scheduler(cfg["scheduler"], optim, **(cfg.get("scheduler_args", {}) or {}))

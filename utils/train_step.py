@@ -1,76 +1,66 @@
-# utils/train_step.py
 from asyncio.log import logger
 from typing import Tuple, Dict, Any
 import torch
 from contextlib import nullcontext
 
-def step_batch(trainer, x: torch.Tensor, y: torch.Tensor, grad_stepper) -> Tuple[torch.Tensor, torch.Tensor, Dict]:
+def step_batch(trainer, x: torch.Tensor, y: torch.Tensor, scaler) -> Tuple[torch.Tensor, torch.Tensor, Dict]:
     """
-    Performs forward, loss compute, backward+step (via grad_stepper).
-    Specific for Segmentation (B, C, H, W).
+    Performs forward, loss compute, backward, and optimizer step using standard PyTorch AMP.
     """
-    # zero grads
-    try:
-        trainer.optimizer.zero_grad(set_to_none=True)
-    except Exception:
-        pass
+    # 1. Zero Gradients
+    trainer.optimizer.zero_grad(set_to_none=True)
 
-    amp_on = bool(getattr(grad_stepper, "amp", False))
-    device_str = "cuda" if "cuda" in str(getattr(trainer, "device", "cpu")).lower() else "cpu"
-    amp_ctx = (torch.cuda.amp.autocast(device_type=device_str) if amp_on else nullcontext())
+    amp_on = getattr(trainer, "amp", False)
+    
+    # --- FIX IS HERE: Use torch.amp.autocast for modern PyTorch ---
+    if amp_on:
+        # device_type="cuda" is required for the modern API
+        amp_ctx = torch.amp.autocast(device_type="cuda", enabled=True)
+    else:
+        amp_ctx = nullcontext()
 
     info: Dict[str, Any] = {}
 
     with amp_ctx:
-        # ---------------------------------------------------------
-        # 1. FORWARD PASS
-        # ---------------------------------------------------------
-        # U-Net usually doesn't need 'current_epoch', but we keep the try/except just in case
+        # 2. Forward Pass
         try:
             outputs = trainer.model(x)
         except TypeError:
             outputs = trainer.model(x, current_epoch=getattr(trainer, "current_epoch", -1))
 
         logits = None
-
-        # Handle Dict outputs (common in advanced models) or Raw Tensor
         if isinstance(outputs, dict):
             logits = outputs.get("logits", outputs.get("out", None))
         elif isinstance(outputs, tuple):
              logits = outputs[0]
         else:
-            logits = outputs # Raw Tensor (B, C, H, W)
+            logits = outputs
 
-        # ---------------------------------------------------------
-        # 2. HANDLE TARGET SHAPE
-        # ---------------------------------------------------------
-        # CrossEntropyLoss expects Target to be (B, H, W) LongTensor
-        # If your loader outputs (B, 1, H, W), squeeze it.
+        # 3. Handle Target Shape (Segmentation requires B,H,W)
         if y.ndim == 4:
             y = y.squeeze(1)
 
-        # ---------------------------------------------------------
-        # 3. COMPUTE LOSS
-        # ---------------------------------------------------------
-        # Standard CrossEntropy for Segmentation
+        # 4. Compute Loss
         main_loss = trainer.loss_fn(logits, y)
 
-    # ---------------------------------------------------------
-    # 4. BACKWARD PASS
-    # ---------------------------------------------------------
-    diag = grad_stepper.backward_and_step(main_loss, grad_clip=trainer.grad_clip,
-                                          debug=trainer.debug, debug_dir=trainer.debug_dir,
-                                          logger=getattr(trainer, "logger", None))
+    # 5. Backward Pass & Step (Standard PyTorch Logic)
+    scaler.scale(main_loss).backward()
+
+    if trainer.grad_clip > 0:
+        scaler.unscale_(trainer.optimizer)
+        torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), trainer.grad_clip)
+
+    scaler.step(trainer.optimizer)
+    scaler.update()
     
+    # 6. Logging / Info
     step_idx = int(getattr(trainer, "_global_step", 0)) + 1
     setattr(trainer, "_global_step", step_idx)
 
     info['main_loss'] = main_loss.item()
     info["lr"] = float(trainer.optimizer.param_groups[0]["lr"])
 
-    # ---------------------------------------------------------
-    # 5. CALLBACKS
-    # ---------------------------------------------------------
+    # 7. Callbacks
     for cb in trainer.cbs:
         if hasattr(cb, "on_batch_end"):
             try:

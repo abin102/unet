@@ -97,107 +97,31 @@ def build_model_from_cfg(model_cfg: Dict[str, Any], device="cuda"):
 
 
 
-def build_loss_and_splits(cfg, train_set):
+
+def build_loss(loss_name, loss_args, device):
     """
-    Build loss function and optional class splits from config and dataset.
-
-    Args:
-        cfg (dict): training config containing "loss", "loss_args", etc.
-        train_set (Dataset): dataset object (must have class_to_idx if using names)
-
-    Returns:
-        (loss_fn, class_splits)
+    Build segmentation loss from config.
     """
-    logger.debug("Entering build_loss_and_splits()")
+    import torch.nn as nn
+    from losses import CEDiceLoss   # ← IMPORTANT: from losses/, not utils
 
-    # --- Extract configuration ---
-    loss_name = str(cfg.get("loss", "")).lower()
-    loss_args = cfg.get("loss_args", {}) or {}
-    class_to_idx = getattr(train_set, "class_to_idx", None)
+    if loss_name is None:
+        raise ValueError("loss_name must be specified in config")
 
-    logger.info("Building loss function '{}' with args={}", loss_name, loss_args)
-    if class_to_idx is None:
-        logger.debug("Dataset does not expose class_to_idx mapping.")
+    lname = loss_name.lower()
+    logger.info("Building loss '{}' with args={}", lname, loss_args)
+
+    if lname == "ce":
+        loss = nn.CrossEntropyLoss(**loss_args)
+
+    elif lname == "ce_dice":
+        loss = CEDiceLoss(**loss_args)
+
     else:
-        logger.debug("Found class_to_idx mapping with {} entries.", len(class_to_idx))
-
-    # --- Helper: convert class names to indices if necessary ---
-    def _to_idx_list(lst):
-        logger.debug("_to_idx_list called with lst={}", lst)
-        if not lst:
-            return []
-        if isinstance(lst[0], str):
-            if class_to_idx is None:
-                logger.error("Config uses class names but dataset has no class_to_idx attribute.")
-                raise ValueError("Config uses class NAMES in loss_args but dataset has no class_to_idx.")
-            try:
-                indices = [class_to_idx[c] for c in lst]
-                logger.debug("Converted class names {} -> indices {}", lst, indices)
-                return indices
-            except KeyError as e:
-                logger.critical("Class name '{}' not found in dataset.class_to_idx.", e.args[0])
-                raise
-        return list(lst)
-
-    # --- Extract head/medium/tail class splits ---
-    try:
-        head_idx = _to_idx_list(loss_args.get("head_classes", []))
-        medium_idx = _to_idx_list(loss_args.get("medium_classes", []))
-        tail_idx = _to_idx_list(loss_args.get("tail_classes", []))
-    except Exception as e:
-        logger.error("Error while converting class splits: {}", e, exc_info=True)
-        raise
-
-    class_splits = None
-    if any([head_idx, medium_idx, tail_idx]):
-        class_splits = {"head": head_idx, "medium": medium_idx, "tail": tail_idx}
-        logger.info("Class splits defined: head={}, medium={}, tail={}",
-                    len(head_idx), len(medium_idx), len(tail_idx))
-    else:
-        logger.debug("No class splits provided in config.")
-
-    # --- Construct the actual loss function ---
-    try:
-        if loss_name == "ce":
-            logger.info("Using standard CrossEntropy loss.")
-            return (lambda logits, y: F.cross_entropy(logits, y)), class_splits
-
-        if loss_name == "reslt_loss":
-            logger.info("Using ResLT loss function.")
-            from losses.reslt_loss import ResLTLoss
-            num_classes = cfg["model_args"]["num_classes"]
-            beta = loss_args.get("beta", 0.5)
-            loss_fn = ResLTLoss(
-                num_classes=num_classes,
-                head_classes=head_idx,
-                medium_classes=medium_idx,
-                tail_classes=tail_idx,
-                beta=beta
-            )
-            logger.debug("Constructed ResLTLoss(num_classes={}, beta={}).", num_classes, beta)
-            return loss_fn, class_splits
-
-        if loss_name == "alr":
-            logger.info("Using ALR loss function.")
-            import losses
-            loss_fn = losses.get_loss("alr", **loss_args)
-            return loss_fn, class_splits
-
-        if loss_name == "regularised_alr":
-            logger.info("Using Regularised ALR loss function.")
-            import losses
-            loss_fn = losses.get_loss("regularised_alr", **loss_args)
-            return loss_fn, class_splits
-
-        logger.error("Unknown loss specified: '{}'", loss_name)
         raise ValueError(f"Unknown loss: {loss_name}")
 
-    except Exception as e:
-        logger.critical("Failed to build loss function '{}': {}", loss_name, e, exc_info=True)
-        raise
+    return loss.to(device)
 
-    finally:
-        logger.debug("Exiting build_loss_and_splits()")
 
 
 
@@ -215,6 +139,12 @@ def get_optim(name, params, **kw):
     logger.debug("get_optim called: name={}, params_type={}, kw={}", name, type(params), {k: v for k, v in kw.items()})
 
     try:
+
+        # --- ADDED ADAMW HERE ---
+        if name == "adamw":
+            logger.info("Creating AdamW optimizer with args: {}", {k: v for k, v in kw.items()})
+            return torch.optim.AdamW(params, **kw)
+        
         if name == "adam":
             logger.info("Creating Adam optimizer with args: {}", {k: v for k, v in kw.items()})
             return torch.optim.Adam(params, **kw)

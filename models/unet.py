@@ -40,7 +40,6 @@ class UNet(nn.Module):
         self.final_conv = nn.Conv2d(features[0], n_classes, kernel_size=1)
 
     def forward(self, x, current_epoch=None):
-        # Note: current_epoch arg added for compatibility with your Trainer's call signature
         skip_connections = []
 
         for down in self.downs:
@@ -55,7 +54,6 @@ class UNet(nn.Module):
             x = self.ups[idx](x)
             skip_connection = skip_connections[idx//2]
 
-            # Handle resizing if input dimensions are not perfectly divisible by 16
             if x.shape != skip_connection.shape:
                 x = F.interpolate(x, size=skip_connection.shape[2:], mode="bilinear", align_corners=True)
 
@@ -64,8 +62,9 @@ class UNet(nn.Module):
 
         return self.final_conv(x)
 
-def build_unet(params):
-    return UNet(**params)
+# --- FIX IS HERE ---
+# Changed from 'def build_unet(params):' to 'def build_unet(**kwargs):'
+def build_unet(**kwargs):
+    return UNet(**kwargs)
 
-# Register the model key "unet"
 REGISTRY["unet"] = build_unet

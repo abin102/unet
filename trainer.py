@@ -1,17 +1,17 @@
 import torch
 from torch import nn
 from typing import Optional, Iterable, Dict, Any
+from torch.amp import GradScaler
 
 # Import the segmentation specific evaluate
 from utils.eval_utils import evaluate
-from utils.amp_utils import GradStepper
 from utils.train_step import step_batch
 from utils.io_utils import save_crash_debug
 from utils.logging_utils import init_logger_and_tb
 
 class Trainer:
     """
-    Segmentation Trainer.
+    Segmentation Trainer (Standard PyTorch Loop).
     """
 
     def __init__(
@@ -25,7 +25,6 @@ class Trainer:
         device="cuda",
         callbacks: Iterable = (),
         progress_bar=True,
-        # class_splits removed - not needed for standard segmentation
         debug=False,
         debug_dir="debug",
         tb_logdir: Optional[str] = None,
@@ -57,7 +56,8 @@ class Trainer:
         else:
             self.logger, self.tb_writer = init_logger_and_tb(self.debug, self.debug_dir, self.tb_logdir)
 
-        self._grad_stepper = GradStepper(self.amp, self.optimizer, self.model, scaler_init_scale=2 ** 12)
+        # --- REPLACED GRAD STEPPER WITH STANDARD SCALER ---
+        self.scaler = GradScaler(enabled=self.amp)
         self.latest_val_stats = {}
 
     def fit(self, train_loader, val_loader, epochs: int, start_epoch: int = 1):
@@ -86,7 +86,8 @@ class Trainer:
                 y = batch[1].to(self.device, non_blocking=True)
 
                 try:
-                    loss, logits, info = step_batch(self, x, y, grad_stepper=self._grad_stepper)
+                    # Pass self.scaler instead of grad_stepper
+                    loss, logits, info = step_batch(self, x, y, scaler=self.scaler)
                 except Exception as e:
                     self.logger.exception("Exception during training step")
                     raise
@@ -101,12 +102,11 @@ class Trainer:
                     else: y_target = y
                     
                     correct_pixels += int((preds == y_target).sum().item())
-                    total_pixels += y_target.numel() # Count all pixels
+                    total_pixels += y_target.numel() 
                 except Exception:
                     pass
 
                 if self.progress_bar:
-                    # Show partial pixel accuracy
                     curr_acc = correct_pixels / max(total_pixels, 1)
                     iterator.set_postfix(loss=f"{loss.item():.4f}", pix_acc=f"{curr_acc:.4f}")
 
@@ -114,14 +114,12 @@ class Trainer:
             train_loss = loss_sum / len(train_loader.dataset)
             train_acc = correct_pixels / max(total_pixels, 1)
 
-            # Evaluate (Uses your new eval_utils.py)
+            # Evaluate 
             val_loss, main_score, stats = evaluate(self, val_loader, epoch=epoch)
             self.latest_val_stats = stats
 
             # Scheduler Step
             if getattr(self, "scheduler", None) is not None and step_scheduler_when == "epoch":
-                # Note: If monitor is loss, we minimize. If Dice, we maximize. 
-                # Schedulers usually expect 'val_loss' to minimize.
                 try:
                     if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                         self.scheduler.step(val_loss)
@@ -131,12 +129,10 @@ class Trainer:
                     pass
 
             # Logging
-            # Log the specific segmentation metrics found in stats
             log_msg = (f"Epoch {epoch:03d}/{epochs} | "
                        f"Tr.Loss={train_loss:.4f} Tr.PixAcc={train_acc:.4f} | "
                        f"Val.Loss={val_loss:.4f}")
             
-            # Append segmentation specific stats if available
             if "dice_infection" in stats:
                 log_msg += f" Dice(Inf)={stats['dice_infection']:.4f}"
             if "mae" in stats:
@@ -146,7 +142,6 @@ class Trainer:
 
             for cb in self.cbs:
                 try:
-                    # Pass the main_score (e.g. dice_infection) as val_acc to callbacks for saving
                     cb.on_epoch_end(self, epoch, train_loss, train_acc, val_loss, main_score)
                 except Exception:
                     self.logger.exception("Callback on_epoch_end failed")
