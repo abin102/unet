@@ -33,14 +33,14 @@ class CT_NpyDataset(Dataset):
         
         # 2. Convert to Tensor
         image = torch.from_numpy(image).float().unsqueeze(0) # (1, H, W)
-        mask = torch.from_numpy(mask).long()                 # (H, W) -> will squeeze later if needed
+        mask = torch.from_numpy(mask).long()                 # (H, W)
 
-        # 3. SAFETY RESIZE (Crucial for mixed datasets)
+        # 3. SAFETY RESIZE
         if image.shape[-2:] != (self.image_size, self.image_size):
             image = F.interpolate(image.unsqueeze(0), size=(self.image_size, self.image_size), 
                                   mode='bilinear', align_corners=False).squeeze(0)
             
-            # Masks MUST use 'nearest' to keep class integers (0,1,2)
+            # Note: We convert to float for interpolate, then back to long
             mask = F.interpolate(mask.unsqueeze(0).unsqueeze(0).float(), size=(self.image_size, self.image_size), 
                                  mode='nearest').long().squeeze(0).squeeze(0)
 
@@ -57,12 +57,29 @@ class CT_NpyDataset(Dataset):
                 mask = TF.vflip(mask)
 
             # Random Rotation (-15 to +15 degrees)
+            # This is now SAFE because of the clamp below.
             if random.random() > 0.5:
                 angle = random.uniform(-15, 15)
                 image = TF.rotate(image, angle, interpolation=TF.InterpolationMode.BILINEAR)
-                # Mask must use NEAREST to preserve integers
                 mask = TF.rotate(mask.unsqueeze(0), angle, interpolation=TF.InterpolationMode.NEAREST).squeeze(0)
 
+        # -----------------------------------------------------------
+        # 5. FINAL SAFETY CLAMP (The Fix)
+        # -----------------------------------------------------------
+        # This prevents any interpolation artifact, "255" padding, or
+        # rotation noise from crashing the GPU.
+        
+        # Ensure it is a LongTensor
+        if not isinstance(mask, torch.LongTensor):
+            mask = mask.long()
+            
+        # Hard clamp: Anything > 1 becomes 0 (Background)
+        # This handles the crash-causing values like 2, 255, etc.
+        mask[mask > 1] = 0
+        
+        # Hard clamp: Anything < 0 becomes 0
+        mask[mask < 0] = 0
+        
         return image, mask
 
 def build_ct_dataset(data_dir, **kwargs):
