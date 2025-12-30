@@ -18,6 +18,7 @@ Designed to keep `train.py` small by moving resume logic here.
 from typing import Optional, Tuple, Dict, Any
 import os
 import torch
+import torch.nn as nn  # Added for checking DataParallel
 from loguru import logger
 
 def _pick(*dicts, keys=None):
@@ -54,9 +55,21 @@ def save_checkpoint(path: str, trainer, epoch: int, is_best: bool = False) -> No
     out_dir = os.path.dirname(path) if os.path.splitext(path)[1] else path
     os.makedirs(out_dir, exist_ok=True)
 
+    # =========================================================
+    # FIX: Unwrap model if using DataParallel before saving
+    # =========================================================
+    model_ref = getattr(trainer, "model", None)
+    if isinstance(model_ref, (nn.DataParallel, nn.parallel.DistributedDataParallel)):
+        model_state = model_ref.module.state_dict()
+    elif model_ref is not None:
+        model_state = model_ref.state_dict()
+    else:
+        model_state = None
+    # =========================================================
+
     ckpt = {
         "epoch": int(epoch),
-        "model_state": getattr(trainer, "model").state_dict() if getattr(trainer, "model", None) is not None else None,
+        "model_state": model_state, # Save clean weights
         "optim_state": getattr(trainer, "optimizer").state_dict() if getattr(trainer, "optimizer", None) is not None else None,
         "scheduler_state": getattr(trainer, "scheduler").state_dict() if getattr(trainer, "scheduler", None) is not None else None,
         "scaler_state": getattr(trainer, "scaler").state_dict() if getattr(trainer, "scaler", None) is not None else None,
@@ -133,10 +146,29 @@ def load_checkpoint(
     start_epoch = int(epoch) + 1 if epoch is not None else 1
     logger.info("Restored training epoch from checkpoint: {} → starting at epoch %d", epoch, start_epoch)
 
-    # --- Restore model ---
+    # --- Restore model (With Smart Key Fixing) ---
     if model_state is not None:
         try:
-            model.load_state_dict(model_state, strict=strict)
+            # =========================================================
+            # FIX: Detect and strip 'module.' prefix if needed
+            # =========================================================
+            curr_keys = set(model.state_dict().keys())
+            loaded_keys = list(model_state.keys())
+            
+            new_state_dict = model_state
+
+            # Case A: Checkpoint has 'module.' but model doesn't (Resume 2-GPU weight on 1-GPU)
+            if any(k.startswith("module.") for k in loaded_keys) and not any(k.startswith("module.") for k in curr_keys):
+                logger.info("Detected 'module.' prefix in checkpoint but not in model. Stripping prefixes...")
+                new_state_dict = {k.replace("module.", ""): v for k, v in model_state.items()}
+            
+            # Case B: Model has 'module.' but checkpoint doesn't (Resume 1-GPU weight on 2-GPU wrapped model)
+            elif any(k.startswith("module.") for k in curr_keys) and not any(k.startswith("module.") for k in loaded_keys):
+                 logger.info("Detected 'module.' prefix in model but not in checkpoint. Adding prefixes...")
+                 new_state_dict = {"module."+k: v for k, v in model_state.items()}
+            # =========================================================
+
+            model.load_state_dict(new_state_dict, strict=strict)
             logger.info("Loaded model state from checkpoint (key='{}').", model_key)
         except Exception as e:
             logger.error("model.load_state_dict failed (key='{}'): {}", model_key, e, exc_info=True)
@@ -211,10 +243,3 @@ def load_checkpoint(
         "latest_val_stats": latest_val_stats,
         "raw": ckpt,
     }
-
-
-
-# small usage example (copy into train.py):
-# from utils.checkpoint_utils import load_checkpoint
-# ckpt_info = load_checkpoint(args.resume, model, optimizer=optim, scheduler=sched, trainer=trainer)
-# start_epoch = ckpt_info.get('start_epoch', 1)
