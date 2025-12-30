@@ -1,6 +1,7 @@
 from utils.logging_utils import init_logger_and_tb
 import sys
 import torch
+import torch.nn as nn  # <--- CHANGE 1: Needed for DataParallel
 import argparse, os
 from utils.config_utils import load_cfg
 from utils.data_utils import make_dataloaders
@@ -29,6 +30,17 @@ def main():
     out_dir = f'{cfg["output_dir"]}/{cfg["exp_name"]}-{__import__("time").strftime("%Y%m%d-%H%M%S")}'
     os.makedirs(out_dir, exist_ok=True)
 
+    # ====================================================
+    # CHANGE 2: GPU Setup from Config
+    # ====================================================
+    # Read gpu_ids from config (default to [0] if missing)
+    gpu_ids = cfg.get("system", {}).get("gpu_ids", [0])
+    
+    # Force PyTorch to only see the requested GPUs
+    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, gpu_ids))
+    
+    # ----------------------------------------------------
+
     # 1. Logging Setup
     log_cfg = cfg.get("logging", {}) or {}
     tb_logdir = os.path.join(out_dir, "tb") if log_cfg.get("tensorboard", False) else None
@@ -52,7 +64,14 @@ def main():
         torch.cuda.manual_seed_all(int(seed))
     torch.backends.cudnn.deterministic = True
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Check device availability after setting CUDA_VISIBLE_DEVICES
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        logger.info(f"🚀 Active GPUs: {gpu_ids} (Visible count: {torch.cuda.device_count()})")
+    else:
+        device = torch.device("cpu")
+        logger.info("⚠️ No GPU detected, using CPU.")
+    
     logger.info("Output Directory: {}", out_dir)
 
     cb = LoggingCallback(tb_logdir=tb_logdir, use_wandb=use_wandb)
@@ -77,14 +96,22 @@ def main():
     model = build_model_from_cfg(model_cfg, device=device)
     logger.info("Model '{}' built.", cfg["model"])
 
+    # ====================================================
+    # CHANGE 3: Wrap Model with DataParallel
+    # ====================================================
+    # This must happen BEFORE optimizer creation so optimizer sees all params
+    if len(gpu_ids) > 1 and torch.cuda.device_count() > 1:
+        logger.info(f"⚡ Enabling DataParallel on {len(gpu_ids)} GPUs!")
+        model = nn.DataParallel(model)
+    # ----------------------------------------------------
+
     # 5. Loss & Optimizer
-    # Direct CrossEntropyLoss for segmentation (ignoring builders.py complex split logic)
-    # If you have specific ignore_index in config, use it
+    # Direct CrossEntropyLoss for segmentation
     loss_fn = build_loss(
-    loss_name=cfg["loss"],
-    loss_args=cfg.get("loss_args", {}),
-    device=device
-)
+        loss_name=cfg["loss"],
+        loss_args=cfg.get("loss_args", {}),
+        device=device
+    )
     
     optim = get_optim(cfg["optim"], [p for p in model.parameters() if p.requires_grad], **(cfg.get("optim_args", {}) or {}))
     sched = get_scheduler(cfg["scheduler"], optim, **(cfg.get("scheduler_args", {}) or {}))
@@ -92,6 +119,7 @@ def main():
     # 6. Checkpoint Loading
     start_epoch = 1
     if args.resume:
+        # Note: Our updated load_checkpoint handles the model wrapper keys automatically
         ck_info = load_checkpoint(args.resume, model, optimizer=optim, scheduler=sched, trainer=None)
         start_epoch = int(ck_info.get("start_epoch", 1))
         logger.info(f"[resume] loaded checkpoint from {args.resume}, resuming at epoch {start_epoch}")

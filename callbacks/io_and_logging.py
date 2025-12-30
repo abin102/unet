@@ -1,6 +1,7 @@
-# callbacks/io_and_logging.py
 import os
 import csv
+import torch  # <--- Added this
+import torch.nn as nn
 from typing import Optional
 
 from utils.io import ensure_dir, save_state
@@ -25,10 +26,8 @@ class Checkpoint:
     def on_epoch_end(self, tr, epoch, trl, tra, vall, vala):
         try:
             # Determine metric according to monitor.
-            # If the monitor key exists in latest_val_stats, use it.
-            # Otherwise fallback to vala or vall based on heuristic.
             stats = getattr(tr, "latest_val_stats", {})
-            monitor_key = self.monitor.replace("val/", "") # strip prefix if present
+            monitor_key = self.monitor.replace("val/", "") 
             
             if monitor_key in stats:
                 metric = stats[monitor_key]
@@ -39,9 +38,18 @@ class Checkpoint:
 
             improved = self.best is None or self.mult * metric > self.mult * (self.best or -1e9)
 
+            # --- FIX STARTS HERE: Handle DataParallel ---
+            # If the model is wrapped in DataParallel, we must save the inner '.module'
+            # to keep the keys clean (e.g. 'conv1.weight' instead of 'module.conv1.weight')
+            if isinstance(tr.model, (nn.DataParallel, nn.parallel.DistributedDataParallel)):
+                raw_model_state = tr.model.module.state_dict()
+            else:
+                raw_model_state = tr.model.state_dict()
+            # --------------------------------------------
+
             state = {
                 "epoch": epoch,
-                "model": tr.model.state_dict(),
+                "model": raw_model_state, # <--- Use the unwrapped state
                 "opt": tr.optimizer.state_dict(),
                 "sched": tr.scheduler.state_dict() if getattr(tr, "scheduler", None) else None,
             }
@@ -61,6 +69,7 @@ class Checkpoint:
 
 
 class CSVLogger:
+    # ... (Rest of the class remains exactly the same) ...
     def __init__(self, out_dir, fmt_acc=True, flush_to_disk=True):
         """
         out_dir: directory where metrics.csv is placed
@@ -88,20 +97,13 @@ class CSVLogger:
             self.w = csv.writer(self.f)
 
             # --- DYNAMIC METRIC LOADING ---
-            # Grab the list of metrics directly from the User's Config
             self.extra_metrics = tr.cfg.get("metrics", [])
             
-            # If config is empty, set a sensible default or leave empty
             if not self.extra_metrics:
-                # You can leave this empty list [] if you strictly want nothing else
-                # or add defaults like ["acc_pixel", "dice_macro"]
                 pass 
 
             if first_time:
-                # Standard Columns that always exist
                 header = ["epoch", "train_loss", "train_acc(%)", "val_loss"]
-                
-                # Add Config Columns
                 header += [m for m in self.extra_metrics]
                 
                 self.w.writerow(header)
@@ -114,17 +116,13 @@ class CSVLogger:
             self.f = None
 
     def _format(self, x):
-        """Helper to format floats/tensors cleanly"""
         if hasattr(x, "item"): x = x.item()
-        
         if isinstance(x, float):
             return f"{x:.4f}"
         return x
         
     def _format_pct(self, x):
-        """Helper for percentages"""
         if hasattr(x, "item"): x = x.item()
-        
         if isinstance(x, float):
             if self.fmt_acc: return f"{x * 100:.3f}"
             return f"{x:.3f}"
@@ -141,8 +139,6 @@ class CSVLogger:
         if self.w is None: return
 
         try:
-            # 1. Standard Metrics
-            # We use _format_pct for tra/vala if they are "accuracy" like
             row = [
                 int(epoch),
                 self._format(trl),
@@ -150,16 +146,14 @@ class CSVLogger:
                 self._format(vall),
             ]
 
-            # 2. Add metrics from Config
             stats = getattr(tr, "latest_val_stats", {}) or {}
             
             for key in self.extra_metrics:
                 val = stats.get(key)
                 if val is not None:
-                    # Heuristic: if it looks like a metric 0-1 we might want 4 decimals
                     row.append(self._format(val))
                 else:
-                    row.append("") # Leave empty if metric missing this epoch
+                    row.append("")
 
             self.w.writerow(row)
             self._flush()
