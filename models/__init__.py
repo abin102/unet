@@ -1,17 +1,9 @@
-import sys
-sys.path.append("..")  # add project root
+# models/__init__.py
 
-import torchvision as tv
-from torch import nn
-import torch.nn.functional as F
-import torch
+from .unet import build_unet
+from .reparm_unet import build_reparam_unet
 
-REGISTRY = {}
-
-def register(name):
-    def deco(fn):
-        REGISTRY[name] = fn
-        return fn
-    return deco
-
-from models.unet import build_unet 
+REGISTRY = {
+    "unet": build_unet,
+    "reparam_unet": build_reparam_unet,
+}

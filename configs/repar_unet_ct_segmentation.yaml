@@ -1,7 +1,7 @@
 # --------------------------------------------------------
 # U-Net Training on COVID-19 CT Segmentation
 # --------------------------------------------------------
-exp_name: "unet_ct_lung_infection"
+exp_name: "unet_ct_lung_infection_reparm"
 seed: 42
 output_dir: "runs/covid_segmentation"
 
@@ -31,12 +31,12 @@ data_args: {}
 # -------------------------
 # Model
 # -------------------------
-model: "unet"
+model: "reparam_unet"  # Must match REGISTRY key exactly
 model_args:
-  in_channels: 1                 # Grayscale input
-  n_classes: 2                   # 0=Bg, 1=Lung, 2=Infection
-  features: [64, 128, 256, 512]  # Standard U-Net depth
-
+  in_channels: 1
+  n_classes: 2
+  features: [64, 128, 256, 512]
+  kernel_sizes: [3, 5] # Optional: remove to default to [3]
 # -------------------------
 # Loss
 # -------------------------

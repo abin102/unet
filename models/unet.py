@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models import REGISTRY
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -66,5 +65,3 @@ class UNet(nn.Module):
 # Changed from 'def build_unet(params):' to 'def build_unet(**kwargs):'
 def build_unet(**kwargs):
     return UNet(**kwargs)
-
-REGISTRY["unet"] = build_unet
