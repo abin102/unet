@@ -17,7 +17,7 @@ system:
 # -------------------------
 dataset: "ct_segmentation"       # Must match key in data/__init__.py
 data_dir: "data/covid_segmentation/processed_data"
-batch_size: 4                   # Adjust: 16 for 24GB VRAM, 8 for 12GB, 4 for 6GB
+batch_size: 8                   # Adjust: 16 for 24GB VRAM, 8 for 12GB, 4 for 6GB
 num_workers: 2
 pin_memory: true
 persistent_workers: true
