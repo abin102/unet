@@ -3,7 +3,8 @@ from typing import Tuple, Dict, Any
 import torch
 from contextlib import nullcontext
 
-def step_batch(trainer, x: torch.Tensor, y: torch.Tensor, scaler) -> Tuple[torch.Tensor, torch.Tensor, Dict]:
+# Added 'batch_idx' argument with default 0 so it doesn't break other calls
+def step_batch(trainer, x: torch.Tensor, y: torch.Tensor, scaler, batch_idx: int = 0) -> Tuple[torch.Tensor, torch.Tensor, Dict]:
     """
     Performs forward, loss compute, backward, and optimizer step using standard PyTorch AMP.
     """
@@ -12,9 +13,7 @@ def step_batch(trainer, x: torch.Tensor, y: torch.Tensor, scaler) -> Tuple[torch
 
     amp_on = getattr(trainer, "amp", False)
     
-    # --- FIX IS HERE: Use torch.amp.autocast for modern PyTorch ---
     if amp_on:
-        # device_type="cuda" is required for the modern API
         amp_ctx = torch.amp.autocast(device_type="cuda", enabled=True)
     else:
         amp_ctx = nullcontext()
@@ -36,14 +35,24 @@ def step_batch(trainer, x: torch.Tensor, y: torch.Tensor, scaler) -> Tuple[torch
         else:
             logits = outputs
 
+        # =========================================================
+        # [DEBUG ADDED] CHECK MODEL OUTPUT SHAPE
+        # =========================================================
+        if batch_idx == 0:
+            trainer.logger.debug(f"Step | Logits Shape: {logits.shape}")
+        # =========================================================
+
         # 3. Handle Target Shape (Segmentation requires B,H,W)
         if y.ndim == 4:
             y = y.squeeze(1)
+            # [DEBUG] Verify squeeze happened
+            if batch_idx == 0:
+                trainer.logger.debug(f"Step | Y Squeezed: {y.shape}")
 
         # 4. Compute Loss
         main_loss = trainer.loss_fn(logits, y)
 
-    # 5. Backward Pass & Step (Standard PyTorch Logic)
+    # 5. Backward Pass & Step
     scaler.scale(main_loss).backward()
 
     if trainer.grad_clip > 0:
@@ -51,8 +60,7 @@ def step_batch(trainer, x: torch.Tensor, y: torch.Tensor, scaler) -> Tuple[torch
         torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), trainer.grad_clip)
 
     scaler.step(trainer.optimizer)
-    scaler.update()
-    
+    scaler.update()    
     # 6. Logging / Info
     step_idx = int(getattr(trainer, "_global_step", 0)) + 1
     setattr(trainer, "_global_step", step_idx)
