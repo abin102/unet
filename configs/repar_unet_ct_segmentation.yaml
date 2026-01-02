@@ -17,10 +17,10 @@ system:
 # -------------------------
 dataset: "ct_segmentation"       # Must match key in data/__init__.py
 data_dir: "data/covid_segmentation/processed_data"
-batch_size: 8                   # Adjust: 16 for 24GB VRAM, 8 for 12GB, 4 for 6GB
+batch_size: 4                   # Adjust: 16 for 24GB VRAM, 8 for 12GB, 4 for 6GB
 num_workers: 2
 pin_memory: true
-persistent_workers: true
+persistent_workers: false
 
 image_size: 512                  # Native CT resolution
 to_rgb: false                    # Keep false (1 channel grayscale)
@@ -82,7 +82,7 @@ optim_args:
 scheduler: "cosine"
 scheduler_args:
   T_max: 100
-  eta_min: 1e-6
+  eta_min: 1e-5
 
 # -------------------------
 # Checkpointing & Early Stopping

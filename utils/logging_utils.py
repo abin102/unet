@@ -75,6 +75,8 @@ class InterceptHandler(logging.Handler):
         _logger.opt(exception=record.exc_info, depth=6).log(level, message)
 
 
+# utils/logging_utils.py
+
 def init_logger_and_tb(
     debug: bool,
     debug_dir: str,
@@ -83,23 +85,19 @@ def init_logger_and_tb(
     rotation: str = "50 MB",
     retention: str = "14 days",
     compression: Optional[str] = "zip",
+    rank: int = 0,             # <--- NEW ARGUMENT
+    is_master: bool = True,    # <--- NEW ARGUMENT
 ) -> Tuple[object, Optional[object]]:
     """
     Initialize loguru logger and optionally a TensorBoard SummaryWriter.
-
-    Args:
-        debug: enable backtrace/diagnose (richer tracebacks)
-        debug_dir: per-run directory where run.log will be created
-        tb_logdir: if provided and SummaryWriter exists, create TB writer (else None)
-        log_level: minimum level (DEBUG/INFO/...)
-        rotation/retention/compression: file-sink params for loguru
-
-    Returns:
-        (loguru_logger, tb_writer_or_None)
+    DDP-Aware: Only logs to console on master, but logs to file on all ranks.
     """
     # ensure output directory exists
     os.makedirs(debug_dir, exist_ok=True)
-    log_file = os.path.join(debug_dir, "run.log")
+    
+    # Unique log file for each rank (crucial for DDP debugging)
+    filename = "run.log" if rank == 0 else f"run_rank_{rank}.log"
+    log_file = os.path.join(debug_dir, filename)
 
     # --- remove existing sinks to make init idempotent ---
     try:
@@ -107,7 +105,7 @@ def init_logger_and_tb(
     except Exception:
         pass
 
-    # --- colored-level customization (nice-to-have) ---
+    # --- colored-level customization ---
     try:
         _logger.level("TRACE", color="<cyan>")
         _logger.level("DEBUG", color="<blue>")
@@ -119,13 +117,16 @@ def init_logger_and_tb(
     except Exception:
         pass
 
-    # --- Console sink (concise + aligned) ---
+    # --- Console sink (Master Only) ---
     console_fmt = (
         "<green>{time:HH:mm:ss}</green> | "
+        f"<magenta>Rank {rank}</magenta> | "  # Add Rank ID to visual output
         "<level>{level: <7}</level> | "
         "<cyan>{file.name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
         "<level>{message}</level>"
     )
+    
+    # Only add console sink if this is the master process
     _logger.add(
         sys.stderr,
         level=log_level,
@@ -133,34 +134,29 @@ def init_logger_and_tb(
         backtrace=debug,
         diagnose=debug,
         format=console_fmt,
+        filter=lambda record: is_master  # <--- CRITICAL: Silence non-master consoles
     )
 
-    # --- File sink (detailed, relative paths) ---
+    # --- File sink (All Ranks) ---
+    # We want ALL ranks to log to file so we can debug deadlocks on Rank 1, etc.
     file_fmt = (
-        "{time:YYYY-MM-DD HH:mm:ss} | {level: <7} | "
+        "{time:YYYY-MM-DD HH:mm:ss} | "
+        f"Rank {rank} | "
+        "{level: <7} | "
         "{extra[path]}:{function}:{line} - {message}"
     )
 
     def _inject_relpath(record: dict) -> bool:
-        """
-        Loguru filter: adds record['extra']['path'] containing a readable path string.
-        Always returns True so logging continues. Defensive and never raises.
-        """
+        """Loguru filter: adds record['extra']['path']"""
         try:
             f = record.get("file")
             fpath = None
-
-            # --- START: MODIFIED SECTION ---
-            # Check for the 'path' attribute on the file object first
             if hasattr(f, "path"):
                 fpath = f.path
-            # Fallback for dict-like access (as in original code)
             elif isinstance(f, dict):
                 fpath = f.get("path")
-            # --- END: MODIFIED SECTION ---
                 
             if not fpath:
-                # no file info; attempt to use existing extra.path or set unknown
                 extra = record.get("extra", {})
                 existing = extra.get("path") if isinstance(extra, dict) else None
                 record.setdefault("extra", {})["path"] = existing or "<unknown>"
@@ -174,10 +170,9 @@ def init_logger_and_tb(
                 pass
         return True
     
-
     _logger.add(
         log_file,
-        level=log_level,
+        level=log_level,  # File often captures DEBUG even if console is INFO
         enqueue=True,
         rotation=rotation,
         retention=retention,
@@ -188,16 +183,16 @@ def init_logger_and_tb(
         filter=_inject_relpath,
     )
 
-    # --- Intercept stdlib logging (so libraries using logging get routed to loguru) ---
+    # --- Intercept stdlib logging ---
     root = logging.getLogger()
     root.setLevel(logging.NOTSET)
     handler = InterceptHandler()
     handler.setFormatter(logging.Formatter("%(message)s"))
     root.handlers = [handler]
 
-    # --- Optional TensorBoard writer (guarded) ---
+    # --- Optional TensorBoard writer (Master Only) ---
     tb_writer = None
-    if tb_logdir:
+    if tb_logdir and is_master:
         try:
             from torch.utils.tensorboard import SummaryWriter
         except Exception:
@@ -210,5 +205,5 @@ def init_logger_and_tb(
         except Exception:
             _logger.exception("Failed to create TensorBoard writer")
 
-    _logger.info("Loguru initialized. Log file: {}", log_file)
+    _logger.info("Loguru initialized on Rank {}. Log file: {}", rank, log_file)
     return _logger, tb_writer

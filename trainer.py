@@ -60,7 +60,10 @@ class Trainer:
         self.scaler = GradScaler(enabled=self.amp)
         self.latest_val_stats = {}
 
-    def fit(self, train_loader, val_loader, epochs: int, start_epoch: int = 1):
+    # -----------------------------------------------------------
+    # CHANGE 1: Added 'train_sampler' argument to fit()
+    # -----------------------------------------------------------
+    def fit(self, train_loader, val_loader, epochs: int, start_epoch: int = 1, train_sampler=None):
         for cb in self.cbs:
             try: cb.on_train_begin(self)
             except Exception: self.logger.error("Callback on_train_begin failed")
@@ -69,6 +72,14 @@ class Trainer:
         self._global_step = 0
 
         for epoch in range(start_epoch, epochs + 1):
+            
+            # -----------------------------------------------------------
+            # CHANGE 2: DDP Sampler Epoch Setting
+            # This ensures data is shuffled differently across GPUs every epoch
+            # -----------------------------------------------------------
+            if train_sampler is not None:
+                train_sampler.set_epoch(epoch)
+
             self.model.train()
             self.current_epoch = epoch
 
@@ -81,17 +92,25 @@ class Trainer:
                                                                                            desc=f"Train {epoch}/{epochs}", 
                                                                                            leave=False))
 
-            for batch in iterator:
+            for batch_idx, batch in enumerate(iterator): # <--- Change 'batch' to 'batch_idx, batch' and 'iterator' to 'enumerate(iterator)'
                 x = batch[0].to(self.device, non_blocking=True)
                 y = batch[1].to(self.device, non_blocking=True)
 
+                # =========================================================
+                # [DEBUG ADDED] CHECK DATA SHAPES (First batch only)
+                # =========================================================
+                if batch_idx == 0:
+                    self.logger.debug(f"Ep {epoch} | Input X: {x.shape}")
+                    self.logger.debug(f"Ep {epoch} | Input Y: {y.shape}")
+                    self.logger.debug(f"Ep {epoch} | Y Unique: {torch.unique(y)}")
+                # =========================================================
+
                 try:
-                    # Pass self.scaler instead of grad_stepper
-                    loss, logits, info = step_batch(self, x, y, scaler=self.scaler)
+                    # Pass batch_idx so train_step can also debug if needed
+                    loss, logits, info = step_batch(self, x, y, scaler=self.scaler, batch_idx=batch_idx) # <--- Passed batch_idx
                 except Exception as e:
                     self.logger.exception("Exception during training step")
                     raise
-
                 # --- Segmentation Metrics (Pixel Accuracy) ---
                 bs = x.size(0)
                 loss_sum += float(loss.item()) * bs

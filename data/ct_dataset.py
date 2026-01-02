@@ -12,10 +12,11 @@ class CT_NpyDataset(Dataset):
         self.split_dir = os.path.join(root_dir, split)
         self.images_dir = os.path.join(self.split_dir, 'images')
         self.masks_dir = os.path.join(self.split_dir, 'masks')
-        self.files = sorted([f for f in os.listdir(self.images_dir) if f.endswith('.npy')])
-        self.image_size = image_size
         
-        # Only augment if we are in the 'train' split
+        # Filter only .npy files to avoid reading hidden system files
+        self.files = sorted([f for f in os.listdir(self.images_dir) if f.endswith('.npy')])
+        
+        self.image_size = image_size
         self.augment = (split == 'train')
 
     def __len__(self):
@@ -37,10 +38,11 @@ class CT_NpyDataset(Dataset):
 
         # 3. SAFETY RESIZE
         if image.shape[-2:] != (self.image_size, self.image_size):
+            # Image: Bilinear is fine (it's continuous data)
             image = F.interpolate(image.unsqueeze(0), size=(self.image_size, self.image_size), 
                                   mode='bilinear', align_corners=False).squeeze(0)
             
-            # Note: We convert to float for interpolate, then back to long
+            # Mask: MUST use 'nearest' to avoid creating values like 0.5 or 127
             mask = F.interpolate(mask.unsqueeze(0).unsqueeze(0).float(), size=(self.image_size, self.image_size), 
                                  mode='nearest').long().squeeze(0).squeeze(0)
 
@@ -57,33 +59,32 @@ class CT_NpyDataset(Dataset):
                 mask = TF.vflip(mask)
 
             # Random Rotation (-15 to +15 degrees)
-            # This is now SAFE because of the clamp below.
             if random.random() > 0.5:
                 angle = random.uniform(-15, 15)
                 image = TF.rotate(image, angle, interpolation=TF.InterpolationMode.BILINEAR)
+                # Mask must use NEAREST
                 mask = TF.rotate(mask.unsqueeze(0), angle, interpolation=TF.InterpolationMode.NEAREST).squeeze(0)
 
         # -----------------------------------------------------------
-        # 5. FINAL SAFETY CLAMP (The Fix)
+        # 5. FINAL SAFETY CLAMP (CRITICAL FIX)
         # -----------------------------------------------------------
-        # This prevents any interpolation artifact, "255" padding, or
-        # rotation noise from crashing the GPU.
         
         # Ensure it is a LongTensor
         if not isinstance(mask, torch.LongTensor):
             mask = mask.long()
             
-        # Hard clamp: Anything > 1 becomes 0 (Background)
-        # This handles the crash-causing values like 2, 255, etc.
-        mask[mask > 1] = 0
+        # LOGIC:
+        # Background (0)  -> Remains 0
+        # Infection (1)   -> Remains 1
+        # Artifacts (> 0) -> Become 1
+        # (This handles clean {0,1} data AND raw {0,255} data safely)
         
-        # Hard clamp: Anything < 0 becomes 0
-        mask[mask < 0] = 0
+        mask = (mask > 0).long()
         
         return image, mask
 
 def build_ct_dataset(data_dir, **kwargs):
-    # Pass the split explicitly so augmentations only happen on train
+    # Pass the split explicitly
     return CT_NpyDataset(data_dir, split='train', **kwargs), \
            CT_NpyDataset(data_dir, split='val', **kwargs)
 
