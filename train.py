@@ -139,7 +139,7 @@ def main():
     # DDP Wrapping
     if is_ddp:
         logger.debug("Converting to SyncBatchNorm...")
-        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
         model = DDP(model, device_ids=[local_rank], output_device=local_rank)
         logger.success("DDP Model Wrapped.")
 

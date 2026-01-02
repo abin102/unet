@@ -11,8 +11,19 @@ def getConv2D(in_channels, out_channels, kernel_size=(3, 3), stride=1, padding=0
     return nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride,
                      padding=padding, groups=groups, bias=bias)
 
-def getBN(channels, eps=1e-5, momentum=0.01, affine=True):
-    return nn.BatchNorm2d(num_features=channels, eps=eps, momentum=momentum, affine=affine)
+# def getBN(channels, eps=1e-5, momentum=0.01, affine=True):
+#     return nn.BatchNorm2d(num_features=channels, eps=eps, momentum=momentum, affine=affine)
+
+def getBN(channels, eps=1e-5, momentum=None, affine=True):
+    # momentum is unused for GroupNorm, kept for API compatibility
+    num_groups = min(8, channels)  # safe default
+    return nn.GroupNorm(
+        num_groups=num_groups,
+        num_channels=channels,
+        eps=eps,
+        affine=affine
+    )
+
 
 def mergeBN(convLayer, BNLayer):
     std = (BNLayer.running_var + BNLayer.eps).sqrt()

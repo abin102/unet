@@ -1,0 +1,220 @@
+ thread: [764,0,0] Assertion `t >= 0 && t < n_classes` failed.
+/pytorch/aten/src/ATen/native/cuda/NLLLoss2d.cu:106: nll_loss2d_forward_kernel: block: [2,0,0],
+ thread: [765,0,0] Assertion `t >= 0 && t < n_classes` failed.
+/pytorch/aten/src/ATen/native/cuda/NLLLoss2d.cu:106: nll_loss2d_forward_kernel: block: [2,0,0],
+ thread: [766,0,0] Assertion `t >= 0 && t < n_classes` failed.
+/pytorch/aten/src/ATen/native/cuda/NLLLoss2d.cu:106: nll_loss2d_forward_kernel: block: [2,0,0],
+ thread: [767,0,0] Assertion `t >= 0 && t < n_classes` failed.
+2026-01-02 01:02:37.440 | ERROR    | utils.eval_utils:evaluate:110 - Evaluation failed at batch
+ 20: CUDA error: device-side assert triggered
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace b
+elow might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Traceback (most recent call last):
+
+  File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/train.py", line 203,
+in <module>
+    main()
+    └ <function main at 0x7aaf7a986290>
+
+  File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/train.py", line 194,
+in main
+    trainer.fit(train_loader, val_loader, epochs=cfg["epochs"], start_epoch=start_epoch, train_
+sampler=train_sampler if is_ddp else None)
+    │       │   │             │                  │                          │
+        │                └ True
+    │       │   │             │                  │                          │
+        └ <torch.utils.data.distributed.DistributedSampler object at 0x7aae98324190>
+    │       │   │             │                  │                          └ 1
+    │       │   │             │                  └ {'exp_name': 'unet_ct_lung_infection_reparm'
+, 'seed': 42, 'output_dir': 'runs/covid_segmentation', 'system': {'gpu_ids': [0, ...
+    │       │   │             └ <torch.utils.data.dataloader.DataLoader object at 0x7aae9832446
+0>
+    │       │   └ <torch.utils.data.dataloader.DataLoader object at 0x7aae98324070>
+    │       └ <function Trainer.fit at 0x7aae99cbe7a0>
+    └ <trainer.Trainer object at 0x7aae984cf550>
+
+  File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/trainer.py", line 129
+, in fit
+    val_loss, main_score, stats = evaluate(self, val_loader, epoch=epoch)
+    │         │                   │        │     │                 └ 11
+    │         │                   │        │     └ <torch.utils.data.dataloader.DataLoader obje
+ct at 0x7aae98324460>
+    │         │                   │        └ <trainer.Trainer object at 0x7aae984cf550>
+    │         │                   └ <function evaluate at 0x7aae99cbe320>
+    │         └ 0.3917753560957584
+    └ 0.45585853158808054
+
+  File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-packages/t
+orch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           │     │       └ {'epoch': 11}
+           │     └ (<trainer.Trainer object at 0x7aae984cf550>, <torch.utils.data.dataloader.Da
+taLoader object at 0x7aae98324460>)
+           └ <function evaluate at 0x7aae99cbe290>
+
+> File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/utils/eval_utils.py",
+ line 96, in evaluate
+    total_loss += loss.item() * bs
+    │             │    │        └ 4
+    │             │    └ <method 'item' of 'torch._C.TensorBase' objects>
+    │             └ <unprintable Tensor object>
+    └ 10.000085592269897
+
+RuntimeError: CUDA error: device-side assert triggered
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace b
+elow might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/train.py", l
+ine 203, in <module>
+[rank1]:     main()
+[rank1]:   File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/train.py", l
+ine 194, in main
+[rank1]:     trainer.fit(train_loader, val_loader, epochs=cfg["epochs"], start_epoch=start_epoc
+h, train_sampler=train_sampler if is_ddp else None)
+[rank1]:   File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/trainer.py",
+ line 129, in fit
+[rank1]:     val_loss, main_score, stats = evaluate(self, val_loader, epoch=epoch)
+[rank1]:   File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-p
+ackages/torch/utils/_contextlib.py", line 116, in decorate_context
+[rank1]:     return func(*args, **kwargs)
+[rank1]:   File "/home/user/abin_ref_papers/project_structure_demo/generative/unet/utils/eval_u
+tils.py", line 96, in evaluate
+[rank1]:     total_loss += loss.item() * bs
+[rank1]: RuntimeError: CUDA error: device-side assert triggered
+[rank1]: CUDA kernel errors might be asynchronously reported at some other API call, so the sta
+cktrace below might be incorrect.
+[rank1]: For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+[rank1]: Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Validating Epoch 11:  27%|███████████▍                              | 33/121 [00:12<00:32,  2.6
+8it/s]terminate called after throwing an instance of 'c10::Error'
+  what():  CUDA error: device-side assert triggered
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace b
+elow might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Exception raised from c10_cuda_check_implementation at /pytorch/c10/cuda/CUDAException.cpp:43 (
+most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_tra
+its<char>, std::allocator<char> >) + 0x98 (0x7aaf79f785e8 in /home/user/abin_ref_papers/environ
+ments/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::bas
+ic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xe0 (0x7aaf79f0d4a2 i
+n /home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-packages/torch/l
+ib/libc10.so)
+frame #2: c10::cuda::c10_cuda_check_implementation(int, char const*, char const*, int, bool) +
+0x3c2 (0x7aaf7a3fd422 in /home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.1
+0/site-packages/torch/lib/libc10_cuda.so)
+frame #3: <unknown function> + 0x1032bb5 (0x7aaf1fa32bb5 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x102ee3b (0x7aaf1fa2ee3b in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #5: <unknown function> + 0x1036554 (0x7aaf1fa36554 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0x457152 (0x7aaf71857152 in /home/user/abin_ref_papers/environme
+nts/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #7: c10::TensorImpl::~TensorImpl() + 0x9 (0x7aaf79f52f39 in /home/user/abin_ref_papers/en
+vironments/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #8: <unknown function> + 0x7185e8 (0x7aaf71b185e8 in /home/user/abin_ref_papers/environme
+nts/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #9: <unknown function> + 0x718a01 (0x7aaf71b18a01 in /home/user/abin_ref_papers/environme
+nts/snn_stdp_poisson/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #10: <unknown function> + 0x159367 (0x5b652f1e5367 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #11: <unknown function> + 0x1697f1 (0x5b652f1f57f1 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #12: <unknown function> + 0x1695ec (0x5b652f1f55ec in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #13: <unknown function> + 0x180df7 (0x5b652f20cdf7 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #14: <unknown function> + 0x193fc8 (0x5b652f21ffc8 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #15: <unknown function> + 0x193fdc (0x5b652f21ffdc in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #16: <unknown function> + 0x193fdc (0x5b652f21ffdc in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #17: <unknown function> + 0x193fdc (0x5b652f21ffdc in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #18: <unknown function> + 0x193fdc (0x5b652f21ffdc in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #19: <unknown function> + 0x15f5a1 (0x5b652f1eb5a1 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #20: <unknown function> + 0x15d11c (0x5b652f1e911c in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #21: <unknown function> + 0x284520 (0x5b652f310520 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #22: <unknown function> + 0x283be6 (0x5b652f30fbe6 in /home/user/abin_ref_papers/environm
+ents/snn_stdp_poisson/bin/python3.10)
+frame #23: Py_FinalizeEx + 0x148 (0x5b652f30c898 in /home/user/abin_ref_papers/environments/snn
+_stdp_poisson/bin/python3.10)
+frame #24: Py_RunMain + 0x173 (0x5b652f2ff943 in /home/user/abin_ref_papers/environments/snn_st
+dp_poisson/bin/python3.10)
+frame #25: Py_BytesMain + 0x2d (0x5b652f2d9a8d in /home/user/abin_ref_papers/environments/snn_s
+tdp_poisson/bin/python3.10)
+frame #26: <unknown function> + 0x29d90 (0x7aaf7b029d90 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #27: __libc_start_main + 0x80 (0x7aaf7b029e40 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #28: _start + 0x25 (0x5b652f2d9985 in /home/user/abin_ref_papers/environments/snn_stdp_po
+isson/bin/python3.10)
+
+01:03:19 | INFO    | eval_utils.py:evaluate:136 - Eval Epoch 11: Loss=0.4245 | acc_pixel=0.9934
+ | dice_class_1=0.5207 | dice_macro=0.7587 | mae=0.0066 | sen_class_1=0.7311 | spec_class_1=0.9
+982
+01:03:19 | INFO    | trainer.py:fit:152 - Epoch 011/100 | Tr.Loss=0.1584 Tr.PixAcc=0.9961 | Val
+.Loss=0.4245 MAE=0.0066
+Train 12/100:   0%|                                                          | 0/320 [00:00<?,
+?it/s]W0102 01:03:39.887000 722630 torch/distributed/elastic/multiprocessing/api.py:900] Sendin
+g process 722677 closing signal SIGTERM
+E0102 01:03:40.052000 722630 torch/distributed/elastic/multiprocessing/api.py:874] failed (exit
+code: -6) local_rank: 1 (pid: 722678) of binary: /home/user/abin_ref_papers/environments/snn_st
+dp_poisson/bin/python3.10
+Traceback (most recent call last):
+  File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/bin/torchrun", line 8, in <mod
+ule>
+    sys.exit(main())
+  File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-packages/t
+orch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-packages/t
+orch/distributed/run.py", line 892, in main
+    run(args)
+  File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-packages/t
+orch/distributed/run.py", line 883, in run
+    elastic_launch(
+  File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-packages/t
+orch/distributed/launcher/api.py", line 139, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/user/abin_ref_papers/environments/snn_stdp_poisson/lib/python3.10/site-packages/t
+orch/distributed/launcher/api.py", line 270, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError:
+=======================================================
+train.py FAILED
+-------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+-------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-01-02_01:03:39
+  host      : user-vi900
+  rank      : 1 (local_rank: 1)
+  exitcode  : -6 (pid: 722678)
+  error_file: <N/A>
+  traceback : Signal 6 (SIGABRT) received by PID 722678
+=======================================================
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$ tmux capture-pane -p > tmux_output.lo
+g
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$ tmux capture-pane -p -S - > full_cons
+ole.log
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$

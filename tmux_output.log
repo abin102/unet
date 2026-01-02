@@ -1,0 +1,20 @@
+train.py FAILED
+-------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+-------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-01-02_01:03:39
+  host      : user-vi900
+  rank      : 1 (local_rank: 1)
+  exitcode  : -6 (pid: 722678)
+  error_file: <N/A>
+  traceback : Signal 6 (SIGABRT) received by PID 722678
+=======================================================
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$
+(snn_stdp_poisson) user@user-vi900:~/.../generative/unet$ tmux capture-pane -p > tmux_output.log
+
